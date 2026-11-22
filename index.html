@@ -65,7 +65,7 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 <body>
 
 <section class="screen active" id="stage1">
-  <div class="video-wrap"><video id="video1" autoplay muted loop playsinline preload="auto"></video></div>
+  <div class="video-wrap"><video id="video1" autoplay loop playsinline preload="auto"></video></div>
   <div class="bottom">
     <p class="q">هل تريد المتابعة؟</p>
     <div class="opts">
@@ -204,7 +204,18 @@ document.querySelectorAll("[data-run]").forEach(b => makeRunaway(b, b.closest(".
 /* ---------- Media ---------- */
 video1.src = CONFIG.video1;
 video1.addEventListener("error", () => { video1.style.display = "none"; });
-video1.play().catch(() => {});
+/* صوت الفيديو الافتتاحي: نحاول التشغيل بصوت، وإن رفض المتصفح نبدأ مكتومًا ثم نفتح الصوت بأول لمسة */
+let introStopped = false;
+video1.volume = 0.9;
+video1.play().catch(() => { video1.muted = true; video1.play().catch(() => {}); });
+function unlockIntroSound() {
+  if (introStopped || !video1.muted) return;
+  video1.muted = false;
+  video1.volume = 0.9;
+  video1.play().catch(() => { video1.muted = true; });
+}
+["pointerdown", "touchstart", "keydown"].forEach(t =>
+  document.addEventListener(t, unlockIntroSound, { once: true, passive: true }));
 video2.src = CONFIG.video2;
 
 /* ---------- Stage 5: floating photos ---------- */
@@ -231,6 +242,10 @@ function startPhotos() {
 
 /* ---------- Stage 7: final video ---------- */
 function playFinal() {
+  /* إيقاف أغنية الفيديو الافتتاحي لحظة بدء الفيديو النهائي */
+  introStopped = true;
+  video1.pause();
+  video1.muted = true;
   video2.muted = false;
   video2.play().catch(() => { video2.muted = true; video2.play().catch(() => {}); });
 }

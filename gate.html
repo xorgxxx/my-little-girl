@@ -55,8 +55,6 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 #wait .glass{background:rgba(255,255,255,.5);border-color:rgba(124,106,230,.4);opacity:0;pointer-events:none;transition:opacity .4s ease}
 #wait .glass.ready{opacity:1;pointer-events:auto}
 
-#siteFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff;z-index:20;opacity:0;transition:opacity .45s ease}
-
 @media (prefers-reduced-motion:reduce){.glass{animation:none}}
 </style>
 </head>
@@ -142,13 +140,19 @@ preload();
 
 /* ---------- الشاشة الأولى: أزرار تهرب (تختفي وتظهر بمكان آخر) ---------- */
 const noOpts = $("#noOpts"), yesBtn = $("#yesBtn");
-let presses = 0, finishing = false;
+let presses = 0, finishing = false, lastPressAt = 0;
 
+/* العدّاد على مستوى الحاوية (مرحلة الالتقاط) حتى لا يضيع أي ضغط */
 function countPress() {
+  const now = Date.now();
+  if (now - lastPressAt < 250) return;
+  lastPressAt = now;
   if (finishing) return;
   presses++;
-  if (presses >= 3) finishRefusals();
+  if (presses >= 5) finishRefusals();
 }
+["pointerdown", "mousedown", "touchstart", "click"].forEach(t =>
+  noOpts.addEventListener(t, countPress, { capture: true, passive: true }));
 
 function finishRefusals() {
   finishing = true;
@@ -177,7 +181,7 @@ document.querySelectorAll(".screen").forEach(s => { s.inert = !s.classList.conta
 yesBtn.addEventListener("click", () => goTo("g2"));
 
 /* ---------- خوارزمية هروب الزر (نفس index.html) ---------- */
-function makeRunaway(button, container, onPress) {
+function makeRunaway(button, container, hoverEscape) {
   let placeholder = null, busy = false, lastPress = 0;
   const M = 20, MIN_DIST = 100;
 
@@ -209,11 +213,6 @@ function makeRunaway(button, container, onPress) {
 
   function escape(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
-    const pressed = e && (e.type === "pointerdown" || e.type === "mousedown" || e.type === "touchstart" || e.type === "click");
-    if (onPress && pressed) {
-      const now = Date.now();
-      if (now - lastPress > 250) { lastPress = now; onPress(); }
-    }
     if (busy) return;
     busy = true;
     if (!placeholder) {
@@ -237,12 +236,14 @@ function makeRunaway(button, container, onPress) {
     }, 130);
   }
 
-  ["pointerenter", "pointerdown", "mousedown", "click", "focus"].forEach(t => button.addEventListener(t, escape));
-  button.addEventListener("touchstart", escape, { passive: false });
+  const evts = ["pointerdown", "mousedown", "click", "touchstart"];
+  if (hoverEscape) evts.push("pointerenter", "focus");
+  evts.forEach(t => button.addEventListener(t, escape, t === "touchstart" ? { passive: false } : undefined));
 }
 
-document.querySelectorAll("#noOpts .opt").forEach(b => makeRunaway(b, $("#g1"), countPress));
-document.querySelectorAll("#g2 [data-run]").forEach(b => makeRunaway(b, b.closest(".screen")));
+/* الصفحة 1: الزر يهرب عند الضغط فقط (5 ضغطات) — الصفحة 2: يهرب عند الاقتراب أيضًا */
+document.querySelectorAll("#noOpts .opt").forEach(b => makeRunaway(b, $("#g1"), false));
+document.querySelectorAll("#g2 [data-run]").forEach(b => makeRunaway(b, b.closest(".screen"), true));
 
 /* ---------- بدء الموقع (الفيديوهات تبدأ هنا فقط) ---------- */
 function goNext() {
@@ -264,71 +265,9 @@ waitGo.addEventListener("click", () => {
 function startSite() {
   if (started) return;
   started = true;
-  const frame = document.createElement("iframe");
-  frame.id = "siteFrame";
-  frame.src = CONFIG.next;
-  frame.title = "التجربة";
-  frame.setAttribute("allow", "autoplay; fullscreen");
-  document.body.appendChild(frame);
-  let revealed = false;
-  const reveal = () => {
-    if (revealed) return;
-    revealed = true;
-    frame.style.opacity = "1";
-  };
-  frame.addEventListener("load", () => { reveal(); hookMedia(frame); });
-  /* احتياط: لو تعذّر تحميل الإطار ننتقل مباشرة */
-  setTimeout(() => {
-    if (!revealed) { try { location.href = CONFIG.next; } catch (e) {} }
-  }, 8000);
+  location.href = CONFIG.next;
 }
 
-/* صوت الفيديو الافتتاحي + إيقافه لحظة بدء الفيديو الثاني */
-function hookMedia(frame) {
-  let tries = 0;
-  const attempt = () => {
-    tries++;
-    let v = null, v2 = null;
-    try {
-      const d = frame.contentDocument;
-      v = d && d.getElementById("video1");
-      v2 = d && d.getElementById("video2");
-    } catch (e) { return; }
-    if (!v) { if (tries < 12) setTimeout(attempt, 300); return; }
-
-    if (v2 && !v2.dataset.stopHooked) {
-      v2.dataset.stopHooked = "1";
-      v2.addEventListener("play", () => {
-        try { v.dataset.stopped = "1"; v.pause(); v.muted = true; } catch (e) {}
-      });
-    }
-
-    if (!v.muted) return;
-    try {
-      v.muted = false;
-      v.volume = 1;
-      const p = v.play();
-      if (p && p.catch) p.catch(() => {});
-    } catch (e) { return; }
-    setTimeout(() => {
-      if (v.paused) {            /* المتصفح رفض الصوت: نرجعه مكتومًا حتى لا يتوقف */
-        v.muted = true;
-        v.play().catch(() => {});
-      } else if (tries < 3) {
-        setTimeout(attempt, 500);
-      }
-    }, 350);
-  };
-  attempt();
-  try {
-    frame.contentDocument.addEventListener("pointerdown", () => {
-      try {
-        const v = frame.contentDocument.getElementById("video1");
-        if (v && v.muted && !v.dataset.stopped) { v.muted = false; v.play().catch(() => {}); }
-      } catch (e) {}
-    });
-  } catch (e) {}
-}
 </script>
 </body>
 </html>

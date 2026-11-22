@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تجربة تفاعلية</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;color:#2b2745;-webkit-tap-highlight-color:transparent}
+.screen{position:fixed;inset:0;height:100dvh;opacity:0;pointer-events:none;z-index:1;transition:opacity .5s ease;overflow:hidden}
+.screen.active{opacity:1;pointer-events:auto;z-index:2}
+
+/* Glass buttons */
+.glass{font:inherit;font-size:clamp(1.05rem,4.2vw,1.4rem);font-weight:600;color:inherit;cursor:pointer;
+ padding:.85em 1.8em;min-width:clamp(110px,28vw,170px);
+ background:rgba(255,255,255,.15);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+ border:1px solid rgba(255,255,255,.35);border-radius:20px;box-shadow:0 8px 28px rgba(60,40,120,.18);
+ animation:bob 4s ease-in-out infinite;transition:opacity .12s ease,transform .25s ease,box-shadow .25s ease;touch-action:manipulation}
+.glass:hover{animation-play-state:paused;transform:translateY(-3px);box-shadow:0 14px 34px rgba(60,40,120,.25)}
+.glass:nth-child(2n){animation-delay:-1.3s}.glass:nth-child(3n){animation-delay:-2.4s}
+.glass:focus-visible{outline:3px solid #6c5ce7;outline-offset:3px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.opt.moving{opacity:0;pointer-events:none}
+
+.q{font-size:clamp(1.6rem,7vw,2.8rem);font-weight:700;text-align:center;line-height:1.5;padding:0 6vw}
+.opts{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:center;padding:0 5vw}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(28px,7vh,60px)}
+
+/* Stage 1 */
+#stage1{background:#fff}
+#stage1 .video-wrap{position:absolute;top:0;left:0;right:0;height:70dvh;background:linear-gradient(135deg,#cdbfff,#ffd0e6);overflow:hidden}
+#stage1 video{width:100%;height:100%;object-fit:cover;display:block}
+#stage1 .bottom{position:absolute;top:70dvh;left:0;right:0;height:30dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.5vh,22px)}
+#stage1 .q{font-size:clamp(1.3rem,5vw,2rem)}
+#stage1 .glass{background:rgba(124,106,230,.14);border-color:rgba(124,106,230,.35);padding:.6em 1.6em}
+
+/* Stages 2-4 */
+#stage2{background:linear-gradient(135deg,#ffd9ea,#dccdff 55%,#c9e8ff)}
+#stage3{background:linear-gradient(135deg,#c9f0e2,#cfe4ff 50%,#f4d4ff)}
+#stage4{background:linear-gradient(135deg,#ffe3c9,#ffd0e0 50%,#d6d0ff)}
+#stage3 .c1{background:rgba(255,140,185,.38)}#stage3 .c2{background:rgba(160,130,255,.38)}
+#stage3 .c3{background:rgba(110,205,250,.42)}#stage3 .c4{background:rgba(120,225,185,.45)}
+#stage3 .glass{min-width:clamp(140px,38vw,230px)}
+
+/* Stage 5 */
+#stage5{background:radial-gradient(circle at 30% 20%,#2a2150,#0f0c24)}
+.photo{position:absolute;object-fit:cover;border-radius:24px;border:3px solid rgba(255,255,255,.65);
+ box-shadow:0 12px 40px rgba(0,0,0,.45),0 0 28px rgba(255,255,255,.25);animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-26px) rotate(var(--r,0deg))}}
+
+/* Stage 6 */
+#stage6{background:rgba(190,15,30,.55);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);color:#fff;padding:0 8vw;text-align:center;transition-duration:.25s}
+#stage6.active{z-index:3}
+#continueBtn{background:rgba(255,255,255,.22);color:#fff;font-size:clamp(1.1rem,4.5vw,1.5rem)}
+#stage6 .lock{font-size:clamp(4rem,18vw,8rem);line-height:1;filter:drop-shadow(0 8px 20px rgba(0,0,0,.3))}
+#stage6 p{font-size:clamp(1.3rem,5.5vw,2.4rem);font-weight:700;line-height:1.7;max-width:900px}
+
+/* Stage 7 */
+#stage7{background:#000}
+#stage7 video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+
+@media (prefers-reduced-motion:reduce){.glass,.photo{animation:none}}
+</style>
+</head>
+<body>
+
+<section class="screen active" id="stage1">
+  <div class="video-wrap"><video id="video1" autoplay muted loop playsinline preload="auto"></video></div>
+  <div class="bottom">
+    <p class="q">هل تريد المتابعة؟</p>
+    <div class="opts">
+      <button class="glass" data-go="2">نعم</button>
+      <button class="glass" data-go="2">نعم</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen center" id="stage2">
+  <p class="q">هل تحبني؟</p>
+  <div class="opts">
+    <button class="glass opt" data-go="3">نعم</button>
+    <button class="glass opt" data-run>لا</button>
+    <button class="glass opt" data-run>لا أعرف</button>
+  </div>
+</section>
+
+<section class="screen center" id="stage3">
+  <p class="q">ما الهدية التي تريدها؟</p>
+  <div class="opts">
+    <button class="glass opt c1" data-run>هدية معنوية</button>
+    <button class="glass opt c2" data-run>هدية مادية</button>
+    <button class="glass opt c3" data-go="4">هدية معنوية ومادية</button>
+    <button class="glass opt c4" data-run>لا أريد شيئًا</button>
+  </div>
+</section>
+
+<section class="screen center" id="stage4">
+  <p class="q">اختر ما تريد؟</p>
+  <div class="opts">
+    <button class="glass opt" data-run>الحب الحقيقي</button>
+    <button class="glass opt" data-go="5">أنا</button>
+  </div>
+</section>
+
+<section class="screen" id="stage5"></section>
+
+<section class="screen center" id="stage6">
+  <div class="lock" aria-hidden="true">🔒</div>
+  <p>يمكنك الحصول على الصور مع الهدايا المعنوية والمادية اللاتي اخترتهما بكامل إرادتك</p>
+  <button class="glass" id="continueBtn">إكمال</button>
+</section>
+
+<section class="screen" id="stage7">
+  <video id="video2" playsinline preload="metadata"></video>
+</section>
+
+<script>
+const CONFIG = {
+  video1: "./assets/video1.mp4",
+  video2: "./assets/video2.mp4",
+  images: ["./assets/img1.jpg", "./assets/img2.jpg", "./assets/img3.jpg",
+           "./assets/img4.jpg", "./assets/img5.jpg"],
+  photosDuration: 4000   // مدة عرض الصور قبل ظهور القفل (بالميلي ثانية)
+};
+
+const $ = (s, r = document) => r.querySelector(s);
+const video1 = $("#video1"), video2 = $("#video2");
+let timer = null;
+
+/* ---------- Stage navigation ---------- */
+function goTo(n) {
+  clearTimeout(timer);
+  document.querySelectorAll(".screen").forEach(s =>
+    s.classList.toggle("active", s.id === "stage" + n || (n === 6 && s.id === "stage5"))); // الصور تبقى خلف القفل
+  if (n === 5) { startPhotos(); video2.preload = "auto"; video2.load(); timer = setTimeout(() => goTo(6), CONFIG.photosDuration); }
+  if (n === 7) playFinal();
+}
+$("#continueBtn").addEventListener("click", () => goTo(7)); // الضغط يشغّل الفيديو مباشرة بالصوت
+
+/* ---------- Runaway algorithm ---------- */
+function makeRunaway(button, container) {
+  let placeholder = null, busy = false;
+  const M = 20, MIN_DIST = 100;
+
+  function visibleRects() {
+    return [...container.querySelectorAll(".opt, .q")]
+      .filter(e => e !== button && e.getClientRects().length && !e.classList.contains("moving"))
+      .map(e => e.getBoundingClientRect());
+  }
+
+  function pickPosition() {
+    const cr = container.getBoundingClientRect(), r = button.getBoundingClientRect();
+    const w = r.width, h = r.height, pad = 12;
+    const minX = Math.max(cr.left, 0) + M, minY = Math.max(cr.top, 0) + M;
+    const maxX = Math.max(minX, Math.min(cr.right, innerWidth) - M - w);
+    const maxY = Math.max(minY, Math.min(cr.bottom, innerHeight) - M - h);
+    const cx = r.left + w / 2, cy = r.top + h / 2;
+    const others = visibleRects();
+    let best = null, bestScore = -Infinity;
+    for (let i = 0; i < 20; i++) {
+      const x = minX + Math.random() * (maxX - minX), y = minY + Math.random() * (maxY - minY);
+      const dist = Math.hypot(x + w / 2 - cx, y + h / 2 - cy);
+      const overlaps = others.filter(o => x < o.right + pad && x + w > o.left - pad && y < o.bottom + pad && y + h > o.top - pad).length;
+      if (!overlaps && dist >= MIN_DIST) return { x, y };
+      const score = -overlaps * 1000 + Math.min(dist, MIN_DIST);
+      if (score > bestScore) { bestScore = score; best = { x, y }; }
+    }
+    return best;
+  }
+
+  function escape(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (busy) return;
+    busy = true;
+    if (!placeholder) { // keep the layout stable when the button leaves the flow
+      const r = button.getBoundingClientRect();
+      placeholder = document.createElement("span");
+      placeholder.style.cssText = `display:inline-block;width:${r.width}px;height:${r.height}px;visibility:hidden`;
+      button.before(placeholder);
+      button.style.position = "fixed";
+      button.style.margin = "0";
+      button.style.width = r.width + "px";
+      button.style.left = r.left + "px";
+      button.style.top = r.top + "px";
+    }
+    button.classList.add("moving");           // fast fade out
+    setTimeout(() => {
+      const p = pickPosition();
+      button.style.left = p.x + "px";
+      button.style.top = p.y + "px";
+      button.classList.remove("moving");      // fade in at the new place
+      busy = false;
+    }, 130);
+  }
+
+  ["pointerenter", "pointerdown", "mousedown", "click", "focus"].forEach(t => button.addEventListener(t, escape));
+  button.addEventListener("touchstart", escape, { passive: false });
+}
+
+/* ---------- Wire up buttons ---------- */
+document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => goTo(+b.dataset.go)));
+document.querySelectorAll("[data-run]").forEach(b => makeRunaway(b, b.closest(".screen")));
+
+/* ---------- Media ---------- */
+video1.src = CONFIG.video1;
+video1.addEventListener("error", () => { video1.style.display = "none"; });
+video1.play().catch(() => {});
+video2.src = CONFIG.video2;
+
+/* ---------- Stage 5: floating photos ---------- */
+const SLOTS = [ // [right%, top%, width(vmin), rotation]
+  [8, 8, 34, -4], [52, 14, 28, 3], [28, 42, 38, 2], [6, 58, 26, -3], [56, 56, 32, 4],
+  [38, 6, 22, -2], [70, 36, 24, 5], [14, 30, 20, -5]
+];
+function startPhotos() {
+  const box = $("#stage5");
+  if (box.dataset.ready) return;
+  box.dataset.ready = "1";
+  CONFIG.images.forEach((src, i) => {
+    const [x, y, w, r] = SLOTS[i % SLOTS.length];
+    const img = document.createElement("img");
+    img.className = "photo";
+    img.alt = "";
+    img.src = src;
+    img.style.cssText = `right:${x}%;top:${y}%;width:${w}vmin;height:${w * 1.25}vmin;--r:${r}deg;` +
+      `animation-duration:${5 + (i % 4) * 1.3}s;animation-delay:${-i * 0.9}s`;
+    img.addEventListener("error", () => { img.style.display = "none"; });
+    box.appendChild(img);
+  });
+}
+
+/* ---------- Stage 7: final video ---------- */
+function playFinal() {
+  video2.muted = false;
+  video2.play().catch(() => { video2.muted = true; video2.play().catch(() => {}); });
+}
+</script>
+</body>
+</html>

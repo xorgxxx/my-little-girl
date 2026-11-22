@@ -59,13 +59,25 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 #stage7{background:#000}
 #stage7 video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
 
+/* Countdown */
+#countdown{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+ background:linear-gradient(135deg,#cdbfff 0%,#ffd0e6 48%,#cfe6ff 100%);transition:opacity .45s ease}
+#countdown.hide{opacity:0;pointer-events:none}
+#cdCard{padding:24px 42px;border-radius:28px;background:rgba(255,255,255,.45);
+ -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+ border:1px solid rgba(255,255,255,.65);box-shadow:0 12px 40px rgba(60,40,120,.18)}
+#cdNum{font-size:clamp(4rem,16vw,8rem);font-weight:800;line-height:1;color:#6c5ce7;
+ font-variant-numeric:tabular-nums;text-shadow:0 10px 34px rgba(80,50,160,.22)}
+
 @media (prefers-reduced-motion:reduce){.glass,.photo{animation:none}}
 </style>
 </head>
 <body>
 
+<div id="countdown" aria-hidden="true"><div id="cdCard"><span id="cdNum">18</span></div></div>
+
 <section class="screen active" id="stage1">
-  <div class="video-wrap"><video id="video1" autoplay loop playsinline preload="auto"></video></div>
+  <div class="video-wrap"><video id="video1" loop playsinline preload="auto"></video></div>
   <div class="bottom">
     <p class="q">هل تريد المتابعة؟</p>
     <div class="opts">
@@ -132,7 +144,7 @@ function goTo(n) {
   clearTimeout(timer);
   document.querySelectorAll(".screen").forEach(s =>
     s.classList.toggle("active", s.id === "stage" + n || (n === 6 && s.id === "stage5"))); // الصور تبقى خلف القفل
-  if (n === 5) { startPhotos(); video2.preload = "auto"; video2.load(); timer = setTimeout(() => goTo(6), CONFIG.photosDuration); }
+  if (n === 5) { startPhotos(); timer = setTimeout(() => goTo(6), CONFIG.photosDuration); }
   if (n === 7) playFinal();
 }
 $("#continueBtn").addEventListener("click", () => goTo(7)); // الضغط يشغّل الفيديو مباشرة بالصوت
@@ -201,27 +213,40 @@ function makeRunaway(button, container) {
 document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => goTo(+b.dataset.go)));
 document.querySelectorAll("[data-run]").forEach(b => makeRunaway(b, b.closest(".screen")));
 
-/* ---------- Media ---------- */
+/* ---------- Media: التحميل يبدأ من أول ما تفتح الصفحة، بدون انتظار ---------- */
 video1.src = CONFIG.video1;
+video2.src = CONFIG.video2;
+video2.preload = "auto";
 video1.addEventListener("error", () => { video1.style.display = "none"; });
-/* صوت الفيديو الافتتاحي: نحاول التشغيل بصوت، وإن رفض المتصفح نبدأ مكتومًا ثم نفتح الصوت بأول لمسة */
+CONFIG.images.forEach(src => { const im = new Image(); im.src = src; });
+
 let introStopped = false;
+let countdownDone = false;
 video1.volume = 0.9;
-video1.play().catch(() => { video1.muted = true; video1.play().catch(() => {}); });
+
+/* ---------- عدّاد 18 → 0: لا ينتظر اكتمال التحميل، ينطلق فور الصفر ويكمل التحميل أثناء العرض ---------- */
+const cd = $("#countdown"), cdNum = $("#cdNum");
+const cdEnd = Date.now() + 18 * 1000;
+const cdTick = setInterval(() => {
+  const left = Math.max(0, Math.ceil((cdEnd - Date.now()) / 1000));
+  cdNum.textContent = left;
+  if (left > 0) return;
+  clearInterval(cdTick);
+  countdownDone = true;
+  cd.classList.add("hide");
+  setTimeout(() => cd.remove(), 500);
+  video1.muted = false;
+  video1.play().catch(() => { video1.muted = true; video1.play().catch(() => {}); });
+  ["pointerdown", "touchstart", "keydown"].forEach(t =>
+    document.addEventListener(t, unlockIntroSound, { once: true, passive: true }));
+}, 100);
+
 function unlockIntroSound() {
-  if (introStopped || !video1.muted) return;
+  if (introStopped || !countdownDone) return;
   video1.muted = false;
   video1.volume = 0.9;
-  video1.play().catch(() => { video1.muted = true; });
+  video1.play().catch(() => {});
 }
-["pointerdown", "touchstart", "keydown"].forEach(t =>
-  document.addEventListener(t, unlockIntroSound, { once: true, passive: true }));
-video2.src = CONFIG.video2;
-
-/* ---------- تحميل صامت وخفيف: الصور فقط (صغيرة) — الفيديو النهائي يتحمّل عند الحاجة ---------- */
-setTimeout(() => {
-  CONFIG.images.forEach(src => { const im = new Image(); im.src = src; });
-}, 3000);
 
 /* ---------- Stage 5: floating photos ---------- */
 const SLOTS = [ // [right%, top%, width(vmin), rotation]

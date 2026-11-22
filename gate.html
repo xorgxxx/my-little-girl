@@ -76,28 +76,25 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 
 <script>
 const CONFIG = {
-  video1: "./assets/video1.mp4",   // الفيديو الافتتاحي (يُحمّل هنا بصمت)
+  video1: "./assets/video1.mp4",
+  video2: "./assets/video2.mp4",
+  images: ["./assets/img1.jpg", "./assets/img2.jpg", "./assets/img3.jpg",
+           "./assets/img4.jpg", "./assets/img5.jpg"],
   next:   "./index.html"
 };
 
 const $ = (s, r = document) => r.querySelector(s);
 const PRESSES_NEEDED = 5;          // عدد الضغطات قبل ظهور «نعم»
 
-/* ---------- تحميل صامت للفيديو الأول: بدون أي مؤشر على الشاشة ---------- */
-const preloadCtl = new AbortController();
-async function preloadVideo1() {
-  try {
-    const res = await fetch(CONFIG.video1, { cache: "force-cache", signal: preloadCtl.signal });
-    if (!res.ok) return;
-    if (!res.body) { await res.arrayBuffer(); return; }
-    const reader = res.body.getReader();
-    for (;;) {
-      const { done } = await reader.read();
-      if (done) break;
-    }
-  } catch (e) { /* لا شيء يظهر للمستخدم */ }
-}
-preloadVideo1();
+/* ---------- تحميل صامت في الخلفية من أول فتح: الفيديوهان + الصور ---------- */
+[CONFIG.video1, CONFIG.video2].forEach(src => {
+  const v = document.createElement("video");
+  v.muted = true; v.playsInline = true; v.preload = "auto";
+  v.style.cssText = "display:none";
+  v.src = src;
+  document.body.appendChild(v);
+});
+CONFIG.images.forEach(src => { const im = new Image(); im.src = src; });
 
 /* ---------- الشاشة الأولى: أزرار تهرب عند الضغط ---------- */
 const noOpts = $("#noOpts"), yesBtn = $("#yesBtn");
@@ -210,7 +207,6 @@ let started = false;
 function startSite() {
   if (started) return;
   started = true;
-  try { preloadCtl.abort(); } catch (e) {}
   location.href = CONFIG.next;
 }
 $("#g2 [data-go]").addEventListener("click", startSite);

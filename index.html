@@ -111,7 +111,7 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 </section>
 
 <section class="screen" id="stage7">
-  <video id="video2" playsinline preload="none"></video>
+  <video id="video2" playsinline preload="metadata"></video>
 </section>
 
 <script>
@@ -218,26 +218,10 @@ function unlockIntroSound() {
   document.addEventListener(t, unlockIntroSound, { once: true, passive: true }));
 video2.src = CONFIG.video2;
 
-/* ---------- تحميل صامت في الخلفية: الصور ثم الفيديو النهائي (بدون أي مؤشر) ---------- */
+/* ---------- تحميل صامت وخفيف: الصور فقط (صغيرة) — الفيديو النهائي يتحمّل عند الحاجة ---------- */
 setTimeout(() => {
-  const urls = CONFIG.images.concat([CONFIG.video2]);
-  let i = 0;
-  const next = () => {
-    if (i >= urls.length) return;
-    const url = urls[i++];
-    fetch(url, { cache: "force-cache" })
-      .then(r => {
-        if (!r.ok) return;
-        if (!r.body) return r.arrayBuffer();
-        const reader = r.body.getReader();
-        const pump = () => reader.read().then(({ done }) => done ? null : pump());
-        return pump();
-      })
-      .catch(() => {})
-      .then(next);
-  };
-  next();
-}, 4000);
+  CONFIG.images.forEach(src => { const im = new Image(); im.src = src; });
+}, 3000);
 
 /* ---------- Stage 5: floating photos ---------- */
 const SLOTS = [ // [right%, top%, width(vmin), rotation]

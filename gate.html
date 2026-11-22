@@ -40,13 +40,6 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
  opacity:0;transform:translateY(14px) scale(.9);transition:opacity .45s ease,transform .45s ease;pointer-events:none}
 #yesBtn.show{opacity:1;transform:none;pointer-events:auto}
 
-/* progress */
-.progress{position:fixed;left:0;right:0;bottom:0;height:6px;background:rgba(90,70,160,.12);z-index:5}
-.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8f7bff,#ff8fbf);transition:width .3s ease}
-.hint{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:clamp(.72rem,2.8vw,.85rem);
- color:#5f5688;opacity:.9;z-index:5;transition:opacity .5s ease;pointer-events:none}
-.hint.dim{opacity:0}
-
 /* Gate screen 2 */
 #g2{background:linear-gradient(135deg,#ffd9ea,#dccdff 55%,#c9e8ff)}
 #g2 .q{font-size:clamp(1.5rem,6vw,2.4rem)}
@@ -54,13 +47,13 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 #g2 .c1{background:rgba(255,140,185,.38)}#g2 .c2{background:rgba(160,130,255,.38)}
 #g2 .c3{background:rgba(110,205,250,.42)}#g2 .c4{background:rgba(120,225,185,.45)}
 
-/* waiting overlay */
-#wait{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
- background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
- opacity:0;pointer-events:none;transition:opacity .3s ease;font-size:clamp(1rem,4vw,1.25rem);font-weight:600;color:#4a4270}
+/* شاشة الانتظار: بدون أي مؤشر تحميل */
+#wait{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+ background:linear-gradient(135deg,#ffd9ea,#dccdff 55%,#c9e8ff);
+ opacity:0;pointer-events:none;transition:opacity .35s ease;font-size:clamp(1.05rem,4vw,1.3rem);font-weight:600;color:#4a4270}
 #wait.show{opacity:1;pointer-events:auto}
-#wait .bar{width:min(70vw,320px);height:8px;border-radius:99px;background:rgba(90,70,160,.15);overflow:hidden}
-#wait .bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8f7bff,#ff8fbf);transition:width .3s ease}
+#wait .glass{background:rgba(255,255,255,.5);border-color:rgba(124,106,230,.4);opacity:0;pointer-events:none;transition:opacity .4s ease}
+#wait .glass.ready{opacity:1;pointer-events:auto}
 
 #siteFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff;z-index:20;opacity:0;transition:opacity .45s ease}
 
@@ -91,39 +84,32 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
   </div>
 </section>
 
-<div id="wait"><span id="waitText">جارٍ تجهيز الفيديو… 0%</span><div class="bar"><span id="waitBar"></span></div></div>
-<div class="progress"><span id="progBar"></span></div>
-<p class="hint" id="hint">جارٍ تجهيز الفيديو… 0%</p>
+<div id="wait"><span id="waitText">لحظة…</span><button class="glass" id="waitGo" type="button">متابعة</button></div>
 
 <script>
 const CONFIG = {
   video1: "./assets/video1.mp4",   // الفيديو الافتتاحي
   video2: "./assets/video2.mp4",   // الفيديو النهائي
+  images: ["./assets/img1.jpg", "./assets/img2.jpg", "./assets/img3.jpg",
+           "./assets/img4.jpg", "./assets/img5.jpg"],
   next:   "./index.html"           // الموقع بعد انتهاء الصفحتين
 };
 
 const $ = (s, r = document) => r.querySelector(s);
 
-/* ---------- تحميل الفيديوهين بالخلفية (بدون عرض) ---------- */
-const progBar = $("#progBar"), hint = $("#hint");
-const wait = $("#wait"), waitText = $("#waitText"), waitBar = $("#waitBar");
-let total = 0, loaded = 0, ready = false, pendingGo = false;
+/* ---------- تحميل صامت بالخلفية: لا يوجد أي مؤشر على الشاشة ---------- */
+const wait = $("#wait"), waitText = $("#waitText"), waitGo = $("#waitGo");
+let ready = false, pendingGo = false, started = false;
 
-function pct() { return total > 0 ? Math.min(100, Math.round(loaded / total * 100)) : 0; }
-function paint() {
-  const p = pct();
-  progBar.style.width = p + "%";
-  waitBar.style.width = p + "%";
-  hint.innerHTML = 'جارٍ تجهيز الفيديو… <bdi dir="ltr">' + p + "%</bdi>";
-  waitText.innerHTML = 'جارٍ تجهيز الفيديو… <bdi dir="ltr">' + p + "%</bdi>";
-}
 function markReady() {
+  if (ready) return;
   ready = true;
-  progBar.style.width = "100%";
-  waitBar.style.width = "100%";
-  hint.textContent = "تم تجهيز الفيديو ✓";
-  setTimeout(() => hint.classList.add("dim"), 1800);
-  if (pendingGo) { pendingGo = false; startSite(); }
+  /* لا انتقال تلقائي: الصفحة لا تختفي إلا بضغطة المستخدم */
+  if (pendingGo) {
+    pendingGo = false;
+    waitText.textContent = "جاهز";
+    waitGo.classList.add("ready");
+  }
 }
 
 async function sizeOf(url) {
@@ -136,29 +122,25 @@ async function sizeOf(url) {
 async function download(url) {
   const res = await fetch(url, { cache: "force-cache" });
   if (!res.ok) throw new Error("HTTP " + res.status);
-  if (!res.body) { const b = await res.arrayBuffer(); loaded += b.byteLength; paint(); return; }
+  if (!res.body) { await res.arrayBuffer(); return; }
   const reader = res.body.getReader();
   for (;;) {
-    const { done, value } = await reader.read();
+    const { done } = await reader.read();
     if (done) break;
-    loaded += value.length;
-    paint();
   }
 }
 
 async function preload() {
-  const sizes = await Promise.all([sizeOf(CONFIG.video1), sizeOf(CONFIG.video2)]);
-  total = sizes[0] + sizes[1];
-  paint();
   for (const url of [CONFIG.video1, CONFIG.video2]) {
     try { await download(url); } catch (e) { /* لا نمنع المستخدم عند فشل الشبكة */ }
   }
   markReady();
+  /* الصور تُحمّل بعد الفيديوهين وبصمت */
+  await Promise.all(CONFIG.images.map(u => fetch(u, { cache: "force-cache" }).catch(() => {})));
 }
-paint();
 preload();
 
-/* ---------- الشاشة الأولى: أزرار تختفي وتظهر بمكان آخر ---------- */
+/* ---------- الشاشة الأولى: أزرار تهرب (تختفي وتظهر بمكان آخر) ---------- */
 const noOpts = $("#noOpts"), yesBtn = $("#yesBtn");
 let presses = 0, finishing = false;
 
@@ -267,15 +249,21 @@ function goNext() {
   if (!ready) {
     pendingGo = true;
     wait.classList.add("show");
-    paint();
     return;
   }
   startSite();
 }
 
 $("#g2 [data-go]").addEventListener("click", goNext);
+waitGo.addEventListener("click", () => {
+  if (!ready) return;
+  wait.classList.remove("show");
+  startSite();
+});
 
 function startSite() {
+  if (started) return;
+  started = true;
   const frame = document.createElement("iframe");
   frame.id = "siteFrame";
   frame.src = CONFIG.next;
@@ -288,21 +276,33 @@ function startSite() {
     revealed = true;
     frame.style.opacity = "1";
   };
-  frame.addEventListener("load", () => { reveal(); unlockSound(frame); });
+  frame.addEventListener("load", () => { reveal(); hookMedia(frame); });
   /* احتياط: لو تعذّر تحميل الإطار ننتقل مباشرة */
   setTimeout(() => {
     if (!revealed) { try { location.href = CONFIG.next; } catch (e) {} }
   }, 8000);
 }
 
-/* تشغيل صوت الفيديو الافتتاحي داخل الصفحة (index.html يجعله مكتومًا) */
-function unlockSound(frame) {
+/* صوت الفيديو الافتتاحي + إيقافه لحظة بدء الفيديو الثاني */
+function hookMedia(frame) {
   let tries = 0;
   const attempt = () => {
     tries++;
-    let v = null;
-    try { v = frame.contentDocument && frame.contentDocument.getElementById("video1"); } catch (e) { return; }
+    let v = null, v2 = null;
+    try {
+      const d = frame.contentDocument;
+      v = d && d.getElementById("video1");
+      v2 = d && d.getElementById("video2");
+    } catch (e) { return; }
     if (!v) { if (tries < 12) setTimeout(attempt, 300); return; }
+
+    if (v2 && !v2.dataset.stopHooked) {
+      v2.dataset.stopHooked = "1";
+      v2.addEventListener("play", () => {
+        try { v.dataset.stopped = "1"; v.pause(); v.muted = true; } catch (e) {}
+      });
+    }
+
     if (!v.muted) return;
     try {
       v.muted = false;
@@ -324,7 +324,7 @@ function unlockSound(frame) {
     frame.contentDocument.addEventListener("pointerdown", () => {
       try {
         const v = frame.contentDocument.getElementById("video1");
-        if (v && v.muted) { v.muted = false; v.play().catch(() => {}); }
+        if (v && v.muted && !v.dataset.stopped) { v.muted = false; v.play().catch(() => {}); }
       } catch (e) {}
     });
   } catch (e) {}

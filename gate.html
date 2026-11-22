@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>هل أنت فرح؟</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;color:#2b2745;-webkit-tap-highlight-color:transparent}
+.screen{position:fixed;inset:0;height:100dvh;opacity:0;pointer-events:none;z-index:1;transition:opacity .5s ease;overflow:hidden}
+.screen.active{opacity:1;pointer-events:auto;z-index:2}
+
+/* Glass buttons */
+.glass{font:inherit;font-size:clamp(1.05rem,4.2vw,1.4rem);font-weight:600;color:inherit;cursor:pointer;
+ padding:.85em 1.8em;min-width:clamp(110px,28vw,170px);
+ background:rgba(255,255,255,.15);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+ border:1px solid rgba(255,255,255,.35);border-radius:20px;box-shadow:0 8px 28px rgba(60,40,120,.18);
+ animation:bob 4s ease-in-out infinite;transition:opacity .12s ease,transform .25s ease,box-shadow .25s ease;touch-action:manipulation}
+.glass:hover{animation-play-state:paused;transform:translateY(-3px);box-shadow:0 14px 34px rgba(60,40,120,.25)}
+.glass:nth-child(2n){animation-delay:-1.3s}.glass:nth-child(3n){animation-delay:-2.4s}
+.glass:focus-visible{outline:3px solid #6c5ce7;outline-offset:3px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.opt.moving{opacity:0;pointer-events:none}
+
+.q{font-size:clamp(1.6rem,7vw,2.8rem);font-weight:700;text-align:center;line-height:1.5;padding:0 6vw}
+.opts{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:center;padding:0 5vw}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(28px,7vh,60px)}
+
+/* Gate screen 1 */
+#g1{background:#fff}
+#g1 .video-wrap{position:absolute;top:0;left:0;right:0;height:62dvh;background:linear-gradient(135deg,#cdbfff,#ffd0e6);overflow:hidden}
+#g1 video{width:100%;height:100%;object-fit:cover;display:block}
+#g1 .bottom{position:absolute;top:62dvh;left:0;right:0;height:38dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.2vh,20px);padding:0 4vw}
+#g1 .q{font-size:clamp(1.2rem,4.6vw,1.85rem)}
+#g1 .glass{background:rgba(124,106,230,.14);border-color:rgba(124,106,230,.35);padding:.6em 1.6em;min-width:clamp(96px,24vw,140px)}
+
+/* vanishing buttons */
+.vanish{transition:opacity .38s ease,transform .38s ease,filter .38s ease,min-width .38s ease,padding .38s ease}
+.vanish.gone{opacity:0;transform:scale(.7) rotate(-6deg);filter:blur(3px);pointer-events:none;min-width:0;padding:0;border-width:0}
+
+/* Yes button */
+#yesBtn{background:rgba(60,200,140,.22);border-color:rgba(60,200,140,.5);font-size:clamp(1.15rem,4.6vw,1.6rem);
+ opacity:0;transform:translateY(14px) scale(.9);transition:opacity .45s ease,transform .45s ease;pointer-events:none}
+#yesBtn.show{opacity:1;transform:none;pointer-events:auto}
+
+/* progress */
+.progress{position:fixed;left:0;right:0;bottom:0;height:6px;background:rgba(90,70,160,.12);z-index:5}
+.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8f7bff,#ff8fbf);transition:width .3s ease}
+.hint{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:clamp(.72rem,2.8vw,.85rem);
+ color:#6d6494;opacity:.85;z-index:5;transition:opacity .5s ease;pointer-events:none}
+.hint.dim{opacity:0}
+
+/* sound toggle */
+#soundBtn{position:fixed;top:12px;left:12px;z-index:6;min-width:0;padding:.5em .9em;font-size:clamp(.8rem,3.2vw,.95rem);
+ background:rgba(255,255,255,.55);border-color:rgba(124,106,230,.35);animation:none;backdrop-filter:blur(10px)}
+
+/* Gate screen 2 */
+#g2{background:linear-gradient(135deg,#ffd9ea,#dccdff 55%,#c9e8ff)}
+#g2 .q{font-size:clamp(1.5rem,6vw,2.4rem)}
+#g2 .glass{background:rgba(255,255,255,.42);border-color:rgba(124,106,230,.4);min-width:clamp(120px,30vw,180px)}
+#g2 .c1{background:rgba(255,140,185,.38)}#g2 .c2{background:rgba(160,130,255,.38)}
+#g2 .c3{background:rgba(110,205,250,.42)}#g2 .c4{background:rgba(120,225,185,.45)}
+
+/* waiting overlay */
+#wait{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+ background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+ opacity:0;pointer-events:none;transition:opacity .3s ease;font-size:clamp(1rem,4vw,1.25rem);font-weight:600;color:#4a4270}
+#wait.show{opacity:1;pointer-events:auto}
+#wait .bar{width:min(70vw,320px);height:8px;border-radius:99px;background:rgba(90,70,160,.15);overflow:hidden}
+#wait .bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8f7bff,#ff8fbf);transition:width .3s ease}
+
+@media (prefers-reduced-motion:reduce){.glass{animation:none}}
+</style>
+</head>
+<body>
+
+<section class="screen active" id="g1">
+  <div class="video-wrap"><video id="bgVideo" autoplay muted loop playsinline preload="auto"></video></div>
+  <button class="glass" id="soundBtn" type="button">🔊 تشغيل الصوت</button>
+  <div class="bottom">
+    <p class="q">أكملت 18 عامًا… هل أنت فرح؟</p>
+    <div class="opts" id="noOpts">
+      <button class="glass opt vanish" type="button">لا</button>
+      <button class="glass opt vanish" type="button">لا أعرف</button>
+      <button class="glass opt vanish" type="button">أبدًا</button>
+    </div>
+    <button class="glass" id="yesBtn" type="button">نعم</button>
+  </div>
+</section>
+
+<section class="screen center" id="g2">
+  <p class="q">من هو أكثر شخص تحبّه؟</p>
+  <div class="opts">
+    <button class="glass opt c1" data-run type="button">أبي</button>
+    <button class="glass opt c2" data-run type="button">روان</button>
+    <button class="glass opt c3" data-go type="button">أنس</button>
+    <button class="glass opt c4" data-run type="button">كلهم</button>
+  </div>
+</section>
+
+<div id="wait"><span id="waitText">جارٍ تجهيز الفيديو… 0%</span><div class="bar"><span id="waitBar"></span></div></div>
+<div class="progress"><span id="progBar"></span></div>
+<p class="hint" id="hint">جارٍ تجهيز الفيديو… 0%</p>
+
+<script>
+const CONFIG = {
+  video1: "./assets/video1.mp4",   // الفيديو الافتتاحي (يُشغّل هنا بالصوت)
+  video2: "./assets/video2.mp4",   // الفيديو النهائي (يُحمّل بالكامل هنا)
+  next:   "./index.html"           // الوجهة بعد انتهاء البوابة
+};
+
+const $ = (s, r = document) => r.querySelector(s);
+
+/* ---------- الصوت ---------- */
+const bgVideo = $("#bgVideo"), soundBtn = $("#soundBtn");
+let soundOn = false;
+bgVideo.src = CONFIG.video1;
+bgVideo.play().catch(() => {});
+bgVideo.addEventListener("error", () => { bgVideo.style.display = "none"; });
+
+function enableSound() {
+  if (soundOn) return;
+  soundOn = true;
+  bgVideo.muted = false;
+  bgVideo.volume = 0.9;
+  bgVideo.play().catch(() => {});
+  soundBtn.textContent = "🔇 إسكات";
+}
+function toggleSound() {
+  if (!soundOn) { enableSound(); return; }
+  soundOn = false;
+  bgVideo.muted = true;
+  soundBtn.textContent = "🔊 تشغيل الصوت";
+}
+soundBtn.addEventListener("click", e => { e.stopPropagation(); toggleSound(); });
+
+/* أول لمسة في الصفحة تشغّل الصوت */
+let firstGesture = false;
+document.addEventListener("pointerdown", () => {
+  if (!firstGesture) { firstGesture = true; enableSound(); }
+}, { once: true });
+
+/* ---------- تحميل الفيديو الثاني مسبقًا ---------- */
+const progBar = $("#progBar"), hint = $("#hint");
+const wait = $("#wait"), waitText = $("#waitText"), waitBar = $("#waitBar");
+let total = 0, loaded = 0, ready = false, pendingGo = false;
+
+function pct() { return total > 0 ? Math.min(100, Math.round(loaded / total * 100)) : 0; }
+function paint() {
+  const p = pct();
+  progBar.style.width = p + "%";
+  waitBar.style.width = p + "%";
+  hint.textContent = "جارٍ تجهيز الفيديو… " + p + "%";
+  waitText.textContent = "جارٍ تجهيز الفيديو… " + p + "%";
+}
+function markReady() {
+  ready = true;
+  progBar.style.width = "100%";
+  waitBar.style.width = "100%";
+  hint.textContent = "تم تجهيز الفيديو ✓";
+  setTimeout(() => hint.classList.add("dim"), 1800);
+  if (pendingGo) { pendingGo = false; goNext(); }
+}
+
+async function sizeOf(url) {
+  try {
+    const r = await fetch(url, { method: "HEAD" });
+    return parseInt(r.headers.get("content-length") || "0", 10) || 0;
+  } catch (e) { return 0; }
+}
+
+async function download(url) {
+  const res = await fetch(url, { cache: "force-cache" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  if (!res.body) { const b = await res.arrayBuffer(); loaded += b.byteLength; paint(); return; }
+  const reader = res.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    loaded += value.length;
+    paint();
+  }
+}
+
+async function preload() {
+  total = await sizeOf(CONFIG.video2);
+  paint();
+  try { await download(CONFIG.video2); }
+  catch (e) { /* الشبكة ضعيفة أو الملف محجوب: لا نمنع المستخدم */ }
+  markReady();
+}
+paint();
+setTimeout(preload, 800);
+
+/* ---------- الشاشة الأولى: أزرار تختفي ---------- */
+const noOpts = $("#noOpts"), yesBtn = $("#yesBtn");
+let removed = 0;
+
+noOpts.addEventListener("click", e => {
+  const btn = e.target.closest(".vanish");
+  if (!btn || btn.classList.contains("gone")) return;
+  btn.classList.add("gone");
+  removed++;
+  setTimeout(() => btn.remove(), 400);
+  if (removed >= 3) setTimeout(() => yesBtn.classList.add("show"), 300);
+});
+
+function goTo(id) {
+  document.querySelectorAll(".screen").forEach(s => {
+    const on = s.id === id;
+    s.classList.toggle("active", on);
+    s.inert = !on;
+  });
+}
+document.querySelectorAll(".screen").forEach(s => { s.inert = !s.classList.contains("active"); });
+
+yesBtn.addEventListener("click", () => { goTo("g2"); });
+
+/* ---------- الشاشة الثانية: من تحب ---------- */
+function goNext() {
+  if (!ready) {
+    pendingGo = true;
+    wait.classList.add("show");
+    paint();
+    return;
+  }
+  location.href = CONFIG.next;
+}
+
+$("#g2 [data-go]").addEventListener("click", () => {
+  enableSound();
+  goNext();
+});
+
+/* ---------- خوارزمية هروب الزر (نفس index.html) ---------- */
+function makeRunaway(button, container) {
+  let placeholder = null, busy = false;
+  const M = 20, MIN_DIST = 100;
+
+  function visibleRects() {
+    return [...container.querySelectorAll(".opt, .q")]
+      .filter(e => e !== button && e.getClientRects().length && !e.classList.contains("moving"))
+      .map(e => e.getBoundingClientRect());
+  }
+
+  function pickPosition() {
+    const cr = container.getBoundingClientRect(), r = button.getBoundingClientRect();
+    const w = r.width, h = r.height, pad = 12;
+    const minX = Math.max(cr.left, 0) + M, minY = Math.max(cr.top, 0) + M;
+    const maxX = Math.max(minX, Math.min(cr.right, innerWidth) - M - w);
+    const maxY = Math.max(minY, Math.min(cr.bottom, innerHeight) - M - h);
+    const cx = r.left + w / 2, cy = r.top + h / 2;
+    const others = visibleRects();
+    let best = null, bestScore = -Infinity;
+    for (let i = 0; i < 20; i++) {
+      const x = minX + Math.random() * (maxX - minX), y = minY + Math.random() * (maxY - minY);
+      const dist = Math.hypot(x + w / 2 - cx, y + h / 2 - cy);
+      const overlaps = others.filter(o => x < o.right + pad && x + w > o.left - pad && y < o.bottom + pad && y + h > o.top - pad).length;
+      if (!overlaps && dist >= MIN_DIST) return { x, y };
+      const score = -overlaps * 1000 + Math.min(dist, MIN_DIST);
+      if (score > bestScore) { bestScore = score; best = { x, y }; }
+    }
+    return best;
+  }
+
+  function escape(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (busy) return;
+    busy = true;
+    if (!placeholder) {
+      const r = button.getBoundingClientRect();
+      placeholder = document.createElement("span");
+      placeholder.style.cssText = `display:inline-block;width:${r.width}px;height:${r.height}px;visibility:hidden`;
+      button.before(placeholder);
+      button.style.position = "fixed";
+      button.style.margin = "0";
+      button.style.width = r.width + "px";
+      button.style.left = r.left + "px";
+      button.style.top = r.top + "px";
+    }
+    button.classList.add("moving");
+    setTimeout(() => {
+      const p = pickPosition();
+      button.style.left = p.x + "px";
+      button.style.top = p.y + "px";
+      button.classList.remove("moving");
+      busy = false;
+    }, 130);
+  }
+
+  ["pointerenter", "pointerdown", "mousedown", "click", "focus"].forEach(t => button.addEventListener(t, escape));
+  button.addEventListener("touchstart", escape, { passive: false });
+}
+
+document.querySelectorAll("#g2 [data-run]").forEach(b => makeRunaway(b, b.closest(".screen")));
+</script>
+</body>
+</html>

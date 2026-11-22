@@ -13,8 +13,8 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 /* Glass buttons */
 .glass{font:inherit;font-size:clamp(1.05rem,4.2vw,1.4rem);font-weight:600;color:inherit;cursor:pointer;
  padding:.85em 1.8em;min-width:clamp(110px,28vw,170px);
- background:rgba(255,255,255,.15);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
- border:1px solid rgba(255,255,255,.35);border-radius:20px;box-shadow:0 8px 28px rgba(60,40,120,.18);
+ background:rgba(255,255,255,.32);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+ border:1px solid rgba(255,255,255,.55);border-radius:20px;box-shadow:0 8px 28px rgba(60,40,120,.18);
  animation:bob 4s ease-in-out infinite;transition:opacity .12s ease,transform .25s ease,box-shadow .25s ease;touch-action:manipulation}
 .glass:hover{animation-play-state:paused;transform:translateY(-3px);box-shadow:0 14px 34px rgba(60,40,120,.25)}
 .glass:nth-child(2n){animation-delay:-1.3s}.glass:nth-child(3n){animation-delay:-2.4s}
@@ -27,19 +27,16 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 .center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(28px,7vh,60px)}
 
 /* Gate screen 1 */
-#g1{background:#fff}
-#g1 .video-wrap{position:absolute;top:0;left:0;right:0;height:62dvh;background:linear-gradient(135deg,#cdbfff,#ffd0e6);overflow:hidden}
-#g1 video{width:100%;height:100%;object-fit:cover;display:block}
-#g1 .bottom{position:absolute;top:62dvh;left:0;right:0;height:38dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.2vh,20px);padding:0 4vw}
-#g1 .q{font-size:clamp(1.2rem,4.6vw,1.85rem)}
-#g1 .glass{background:rgba(124,106,230,.14);border-color:rgba(124,106,230,.35);padding:.6em 1.6em;min-width:clamp(96px,24vw,140px)}
-
-/* vanishing buttons */
-.vanish{transition:opacity .38s ease,transform .38s ease,filter .38s ease,min-width .38s ease,padding .38s ease}
-.vanish.gone{opacity:0;transform:scale(.7) rotate(-6deg);filter:blur(3px);pointer-events:none;min-width:0;padding:0;border-width:0}
+#g1{background:linear-gradient(135deg,#cdbfff 0%,#ffd0e6 48%,#cfe6ff 100%)}
+#g1::before{content:"";position:absolute;width:70vmax;height:70vmax;right:-25vmax;top:-30vmax;border-radius:50%;
+ background:radial-gradient(circle,rgba(255,255,255,.75),rgba(255,255,255,0) 62%);pointer-events:none}
+#g1::after{content:"";position:absolute;width:60vmax;height:60vmax;left:-25vmax;bottom:-28vmax;border-radius:50%;
+ background:radial-gradient(circle,rgba(168,148,255,.35),rgba(168,148,255,0) 65%);pointer-events:none}
+#g1 .center{position:relative;z-index:2;height:100%}
+#g1 .glass{background:rgba(255,255,255,.42);border-color:rgba(124,106,230,.35);padding:.7em 1.6em;min-width:clamp(96px,24vw,150px)}
 
 /* Yes button */
-#yesBtn{background:rgba(60,200,140,.22);border-color:rgba(60,200,140,.5);font-size:clamp(1.15rem,4.6vw,1.6rem);
+#yesBtn{background:rgba(60,200,140,.24);border-color:rgba(40,180,120,.55);font-size:clamp(1.15rem,4.6vw,1.6rem);
  opacity:0;transform:translateY(14px) scale(.9);transition:opacity .45s ease,transform .45s ease;pointer-events:none}
 #yesBtn.show{opacity:1;transform:none;pointer-events:auto}
 
@@ -47,12 +44,8 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 .progress{position:fixed;left:0;right:0;bottom:0;height:6px;background:rgba(90,70,160,.12);z-index:5}
 .progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8f7bff,#ff8fbf);transition:width .3s ease}
 .hint{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:clamp(.72rem,2.8vw,.85rem);
- color:#6d6494;opacity:.85;z-index:5;transition:opacity .5s ease;pointer-events:none}
+ color:#5f5688;opacity:.9;z-index:5;transition:opacity .5s ease;pointer-events:none}
 .hint.dim{opacity:0}
-
-/* sound toggle */
-#soundBtn{position:fixed;top:12px;left:12px;z-index:6;min-width:0;padding:.5em .9em;font-size:clamp(.8rem,3.2vw,.95rem);
- background:rgba(255,255,255,.55);border-color:rgba(124,106,230,.35);animation:none;backdrop-filter:blur(10px)}
 
 /* Gate screen 2 */
 #g2{background:linear-gradient(135deg,#ffd9ea,#dccdff 55%,#c9e8ff)}
@@ -63,11 +56,13 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 
 /* waiting overlay */
 #wait{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
- background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+ background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
  opacity:0;pointer-events:none;transition:opacity .3s ease;font-size:clamp(1rem,4vw,1.25rem);font-weight:600;color:#4a4270}
 #wait.show{opacity:1;pointer-events:auto}
 #wait .bar{width:min(70vw,320px);height:8px;border-radius:99px;background:rgba(90,70,160,.15);overflow:hidden}
 #wait .bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8f7bff,#ff8fbf);transition:width .3s ease}
+
+#siteFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff;z-index:20;opacity:0;transition:opacity .45s ease}
 
 @media (prefers-reduced-motion:reduce){.glass{animation:none}}
 </style>
@@ -75,14 +70,12 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 <body>
 
 <section class="screen active" id="g1">
-  <div class="video-wrap"><video id="bgVideo" autoplay muted loop playsinline preload="auto"></video></div>
-  <button class="glass" id="soundBtn" type="button">🔊 تشغيل الصوت</button>
-  <div class="bottom">
+  <div class="center">
     <p class="q">أكملت 18 عامًا… هل أنت فرح؟</p>
     <div class="opts" id="noOpts">
-      <button class="glass opt vanish" type="button">لا</button>
-      <button class="glass opt vanish" type="button">لا أعرف</button>
-      <button class="glass opt vanish" type="button">أبدًا</button>
+      <button class="glass opt" type="button">لا</button>
+      <button class="glass opt" type="button">لا أعرف</button>
+      <button class="glass opt" type="button">أبدًا</button>
     </div>
     <button class="glass" id="yesBtn" type="button">نعم</button>
   </div>
@@ -104,43 +97,14 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 
 <script>
 const CONFIG = {
-  video1: "./assets/video1.mp4",   // الفيديو الافتتاحي (يُشغّل هنا بالصوت)
-  video2: "./assets/video2.mp4",   // الفيديو النهائي (يُحمّل بالكامل هنا)
-  next:   "./index.html"           // الوجهة بعد انتهاء البوابة
+  video1: "./assets/video1.mp4",   // الفيديو الافتتاحي
+  video2: "./assets/video2.mp4",   // الفيديو النهائي
+  next:   "./index.html"           // الموقع بعد انتهاء الصفحتين
 };
 
 const $ = (s, r = document) => r.querySelector(s);
 
-/* ---------- الصوت ---------- */
-const bgVideo = $("#bgVideo"), soundBtn = $("#soundBtn");
-let soundOn = false;
-bgVideo.src = CONFIG.video1;
-bgVideo.play().catch(() => {});
-bgVideo.addEventListener("error", () => { bgVideo.style.display = "none"; });
-
-function enableSound() {
-  if (soundOn) return;
-  soundOn = true;
-  bgVideo.muted = false;
-  bgVideo.volume = 0.9;
-  bgVideo.play().catch(() => {});
-  soundBtn.textContent = "🔇 إسكات";
-}
-function toggleSound() {
-  if (!soundOn) { enableSound(); return; }
-  soundOn = false;
-  bgVideo.muted = true;
-  soundBtn.textContent = "🔊 تشغيل الصوت";
-}
-soundBtn.addEventListener("click", e => { e.stopPropagation(); toggleSound(); });
-
-/* أول لمسة في الصفحة تشغّل الصوت */
-let firstGesture = false;
-document.addEventListener("pointerdown", () => {
-  if (!firstGesture) { firstGesture = true; enableSound(); }
-}, { once: true });
-
-/* ---------- تحميل الفيديو الثاني مسبقًا ---------- */
+/* ---------- تحميل الفيديوهين بالخلفية (بدون عرض) ---------- */
 const progBar = $("#progBar"), hint = $("#hint");
 const wait = $("#wait"), waitText = $("#waitText"), waitBar = $("#waitBar");
 let total = 0, loaded = 0, ready = false, pendingGo = false;
@@ -150,8 +114,8 @@ function paint() {
   const p = pct();
   progBar.style.width = p + "%";
   waitBar.style.width = p + "%";
-  hint.textContent = "جارٍ تجهيز الفيديو… " + p + "%";
-  waitText.textContent = "جارٍ تجهيز الفيديو… " + p + "%";
+  hint.innerHTML = 'جارٍ تجهيز الفيديو… <bdi dir="ltr">' + p + "%</bdi>";
+  waitText.innerHTML = 'جارٍ تجهيز الفيديو… <bdi dir="ltr">' + p + "%</bdi>";
 }
 function markReady() {
   ready = true;
@@ -159,7 +123,7 @@ function markReady() {
   waitBar.style.width = "100%";
   hint.textContent = "تم تجهيز الفيديو ✓";
   setTimeout(() => hint.classList.add("dim"), 1800);
-  if (pendingGo) { pendingGo = false; goNext(); }
+  if (pendingGo) { pendingGo = false; startSite(); }
 }
 
 async function sizeOf(url) {
@@ -183,27 +147,41 @@ async function download(url) {
 }
 
 async function preload() {
-  total = await sizeOf(CONFIG.video2);
+  const sizes = await Promise.all([sizeOf(CONFIG.video1), sizeOf(CONFIG.video2)]);
+  total = sizes[0] + sizes[1];
   paint();
-  try { await download(CONFIG.video2); }
-  catch (e) { /* الشبكة ضعيفة أو الملف محجوب: لا نمنع المستخدم */ }
+  for (const url of [CONFIG.video1, CONFIG.video2]) {
+    try { await download(url); } catch (e) { /* لا نمنع المستخدم عند فشل الشبكة */ }
+  }
   markReady();
 }
 paint();
-setTimeout(preload, 800);
+preload();
 
-/* ---------- الشاشة الأولى: أزرار تختفي ---------- */
+/* ---------- الشاشة الأولى: أزرار تختفي وتظهر بمكان آخر ---------- */
 const noOpts = $("#noOpts"), yesBtn = $("#yesBtn");
-let removed = 0;
+let presses = 0, finishing = false;
 
-noOpts.addEventListener("click", e => {
-  const btn = e.target.closest(".vanish");
-  if (!btn || btn.classList.contains("gone")) return;
-  btn.classList.add("gone");
-  removed++;
-  setTimeout(() => btn.remove(), 400);
-  if (removed >= 3) setTimeout(() => yesBtn.classList.add("show"), 300);
-});
+function countPress() {
+  if (finishing) return;
+  presses++;
+  if (presses >= 3) finishRefusals();
+}
+
+function finishRefusals() {
+  finishing = true;
+  noOpts.querySelectorAll(".opt").forEach(b => {
+    b.style.animation = "none";
+    b.style.transition = "opacity .45s ease, transform .45s ease, filter .45s ease";
+    b.style.opacity = "0";
+    b.style.transform = "scale(.7)";
+    b.style.filter = "blur(3px)";
+  });
+  setTimeout(() => {
+    noOpts.querySelectorAll(".opt, span").forEach(el => el.remove());
+    yesBtn.classList.add("show");
+  }, 520);
+}
 
 function goTo(id) {
   document.querySelectorAll(".screen").forEach(s => {
@@ -214,27 +192,11 @@ function goTo(id) {
 }
 document.querySelectorAll(".screen").forEach(s => { s.inert = !s.classList.contains("active"); });
 
-yesBtn.addEventListener("click", () => { goTo("g2"); });
-
-/* ---------- الشاشة الثانية: من تحب ---------- */
-function goNext() {
-  if (!ready) {
-    pendingGo = true;
-    wait.classList.add("show");
-    paint();
-    return;
-  }
-  location.href = CONFIG.next;
-}
-
-$("#g2 [data-go]").addEventListener("click", () => {
-  enableSound();
-  goNext();
-});
+yesBtn.addEventListener("click", () => goTo("g2"));
 
 /* ---------- خوارزمية هروب الزر (نفس index.html) ---------- */
-function makeRunaway(button, container) {
-  let placeholder = null, busy = false;
+function makeRunaway(button, container, onPress) {
+  let placeholder = null, busy = false, lastPress = 0;
   const M = 20, MIN_DIST = 100;
 
   function visibleRects() {
@@ -265,6 +227,11 @@ function makeRunaway(button, container) {
 
   function escape(e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
+    const pressed = e && (e.type === "pointerdown" || e.type === "mousedown" || e.type === "touchstart" || e.type === "click");
+    if (onPress && pressed) {
+      const now = Date.now();
+      if (now - lastPress > 250) { lastPress = now; onPress(); }
+    }
     if (busy) return;
     busy = true;
     if (!placeholder) {
@@ -292,7 +259,76 @@ function makeRunaway(button, container) {
   button.addEventListener("touchstart", escape, { passive: false });
 }
 
+document.querySelectorAll("#noOpts .opt").forEach(b => makeRunaway(b, $("#g1"), countPress));
 document.querySelectorAll("#g2 [data-run]").forEach(b => makeRunaway(b, b.closest(".screen")));
+
+/* ---------- بدء الموقع (الفيديوهات تبدأ هنا فقط) ---------- */
+function goNext() {
+  if (!ready) {
+    pendingGo = true;
+    wait.classList.add("show");
+    paint();
+    return;
+  }
+  startSite();
+}
+
+$("#g2 [data-go]").addEventListener("click", goNext);
+
+function startSite() {
+  const frame = document.createElement("iframe");
+  frame.id = "siteFrame";
+  frame.src = CONFIG.next;
+  frame.title = "التجربة";
+  frame.setAttribute("allow", "autoplay; fullscreen");
+  document.body.appendChild(frame);
+  let revealed = false;
+  const reveal = () => {
+    if (revealed) return;
+    revealed = true;
+    frame.style.opacity = "1";
+  };
+  frame.addEventListener("load", () => { reveal(); unlockSound(frame); });
+  /* احتياط: لو تعذّر تحميل الإطار ننتقل مباشرة */
+  setTimeout(() => {
+    if (!revealed) { try { location.href = CONFIG.next; } catch (e) {} }
+  }, 8000);
+}
+
+/* تشغيل صوت الفيديو الافتتاحي داخل الصفحة (index.html يجعله مكتومًا) */
+function unlockSound(frame) {
+  let tries = 0;
+  const attempt = () => {
+    tries++;
+    let v = null;
+    try { v = frame.contentDocument && frame.contentDocument.getElementById("video1"); } catch (e) { return; }
+    if (!v) { if (tries < 12) setTimeout(attempt, 300); return; }
+    if (!v.muted) return;
+    try {
+      v.muted = false;
+      v.volume = 1;
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) { return; }
+    setTimeout(() => {
+      if (v.paused) {            /* المتصفح رفض الصوت: نرجعه مكتومًا حتى لا يتوقف */
+        v.muted = true;
+        v.play().catch(() => {});
+      } else if (tries < 3) {
+        setTimeout(attempt, 500);
+      }
+    }, 350);
+  };
+  attempt();
+  try {
+    frame.contentDocument.addEventListener("pointerdown", () => {
+      try {
+        const v = frame.contentDocument.getElementById("video1");
+        if (v && v.muted) { v.muted = false; v.play().catch(() => {}); }
+      } catch (e) {}
+    });
+  } catch (e) {}
+}
 </script>
 </body>
 </html>

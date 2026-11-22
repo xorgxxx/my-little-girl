@@ -111,7 +111,7 @@ html,body{height:100%;overflow:hidden;background:#fff;font-family:"Segoe UI",Tah
 </section>
 
 <section class="screen" id="stage7">
-  <video id="video2" playsinline preload="metadata"></video>
+  <video id="video2" playsinline preload="none"></video>
 </section>
 
 <script>
@@ -217,6 +217,27 @@ function unlockIntroSound() {
 ["pointerdown", "touchstart", "keydown"].forEach(t =>
   document.addEventListener(t, unlockIntroSound, { once: true, passive: true }));
 video2.src = CONFIG.video2;
+
+/* ---------- تحميل صامت في الخلفية: الصور ثم الفيديو النهائي (بدون أي مؤشر) ---------- */
+setTimeout(() => {
+  const urls = CONFIG.images.concat([CONFIG.video2]);
+  let i = 0;
+  const next = () => {
+    if (i >= urls.length) return;
+    const url = urls[i++];
+    fetch(url, { cache: "force-cache" })
+      .then(r => {
+        if (!r.ok) return;
+        if (!r.body) return r.arrayBuffer();
+        const reader = r.body.getReader();
+        const pump = () => reader.read().then(({ done }) => done ? null : pump());
+        return pump();
+      })
+      .catch(() => {})
+      .then(next);
+  };
+  next();
+}, 4000);
 
 /* ---------- Stage 5: floating photos ---------- */
 const SLOTS = [ // [right%, top%, width(vmin), rotation]
